@@ -4,7 +4,6 @@ category: Interactive Apps
 subcategory: Servers
 role: batch_connect
 description: |
-  This app will launch [TensorBoard], [TensorFlow]'s Visualization Toolkit, on [Alvis].
+  This app will launch [TensorBoard], [TensorFlow]'s Visualization Toolkit.
   [TensorBoard]: https://www.tensorflow.org/guide/summaries_and_tensorboard
   [TensorFlow]: https://www.tensorflow.org/
-  [Alvis]: https://www.c3se.chalmers.se
