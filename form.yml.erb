@@ -33,6 +33,7 @@ cluster: "alvis1"
 form:
   - tb_logdir
   - tb_extra_args
+  - tb_runtime
   #- sh_tf_version
   #- sh_modules
   #- sh_partition
@@ -54,6 +55,20 @@ attributes:
 
   tb_extra_args:
     label: "Additional TensorBoard arguments (optional)"
+
+  tb_runtime:
+    widget: "select"
+    label: "Runtime"
+    options:
+      System provided:
+<% glob_prettify_lookup(["/apps/portal/tensorboard/*.sh"]).each do |pretty_path, path| %>
+        - [ "<%= pretty_path %>", "<%= path %>" ]
+<% end %>
+      User provided:
+        - [ "~/portal/tensorboard/*.sh",  "x", disabled: true ]
+<% glob_prettify_lookup(["#{Dir.home}/portal/tensorboard/*.sh"]).each do |pretty_path, path| %>
+        - [ "<%= pretty_path %>", "<%= path %>" ]
+<% end %>
 
 #  sh_tf_version:
 #    label: "Tensorboard version"

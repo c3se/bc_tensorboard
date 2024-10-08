@@ -5,8 +5,8 @@
 #
 
 ml purge > /dev/null 2>&1
-# Load the latest Tensorflow module, it has tensorboard as an extension
-module load TensorFlow
+# Have tensorboard in PATH from user script
+source <%= context.tb_runtime %>
 
 # tensorboard creates a file under TMPDIR called .tensorboard-info/pid-$PID.info
 # There is a risk of $PID collision due to running inside a container so set TMPDIR
