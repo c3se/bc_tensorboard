@@ -1,47 +1,26 @@
 <%-
-  # get _list_partitions
-  p_cmd = "sinfo -ho %R | sort -u"
-  begin
-    output, status = Open3.capture2e(p_cmd)
-    if status.success?
-      _list_partitions = output.split("\n").map(&:strip).reject(&:blank?).sort
-    else
-      raise output
-    end
-  rescue => e
-    _list_partitions = []
-    p_error = e.message.strip
-  end
+# environment depends on containers
+pattern = %r{TensorFlow-(\d+\.\d+\.\d+)\.sif}
+all_tf_sif=glob_prettify_lookup(["/apps/containers/TensorFlow/*.sif"])
 
-  # get tensorboard modules
-  m_cmd = "bash -il -c 'module -t avail tensorboard 2>&1 | grep tensorboard' 2>/dev/null"
-  begin
-    output, status = Open3.capture2e(m_cmd)
-    if status.success?
-      _list_tf_versions = output.split("\n").map(&:strip).reject(&:blank?).sort
-    else
-      raise output
-    end
-  rescue => e
-    _list_tf_versions = []
-    m_error = e.message.strip
-  end
+sif_env = all_tf_sif.map do |pretty_path, path| 
+  match = path.to_s.match(pattern)
+  version = match ? match[1]: nil
+  [pretty_path, path, version]
+end.select {|_, _,version| version}.sort_by {|_,_,version| version.split('.').map(&:to_i)}.reverse
+
+
+# optional, uncomment in `tb_runtime` to user these
+lmod_env=glob_prettify_lookup(["/apps/portal/tensorboard/*.sh"])
+user_env=glob_prettify_lookup(["#{Dir.home}/portal/tensorboard/*.{sif,sh}"])
 -%>
 ---
 cluster: "alvis1"
 
 form:
   - tb_logdir
-  - tb_extra_args
   - tb_runtime
-  #- sh_tf_version
-  #- sh_modules
-  #- sh_partition
-  #- sh_cpus
-  #- sh_gpus
-  #- sh_mem
-  #- bc_num_hours
-  #- bc_email_on_started
+  - tb_extra_args
 
 attributes:
 
@@ -53,89 +32,25 @@ attributes:
     data-target-file-type: dirs  # Valid values are: files, dirs, or both
     help: "The directory that contains data to visualize."
 
-  tb_extra_args:
-    label: "Additional TensorBoard arguments (optional)"
-
   tb_runtime:
     widget: "select"
-    label: "Runtime"
+    label: "Container"
     options:
-      System provided:
-<% glob_prettify_lookup(["/apps/portal/tensorboard/*.sh"]).each do |pretty_path, path| %>
+      TensorFlow containers:
+<% sif_env.each do |pretty_path, path, version| %>
         - [ "<%= pretty_path %>", "<%= path %>" ]
 <% end %>
-      User provided:
-        - [ "~/portal/tensorboard/*.sh",  "x", disabled: true ]
-<% glob_prettify_lookup(["#{Dir.home}/portal/tensorboard/*.sh"]).each do |pretty_path, path| %>
-        - [ "<%= pretty_path %>", "<%= path %>" ]
-<% end %>
+# # optional: we can user the ones from module if we want
+#       LMOD modules:
+# <% lmod_env.each do |pretty_path, path| %>
+#         - [ "<%= pretty_path %>", "<%= path %>" ]
+# <% end %>
+# # optional: we can also let users select their own environment/sif
+#       User environments:
+#        - [ "~/portal/tensorboard/*.{sh,sif}",  "x", disabled: true ]
+# <% user_env.each do |pretty_path, path| %>
+#         - [ "<%= pretty_path %>", "<%= path %>" ]
+# <% end %>
 
-#  sh_tf_version:
-#    label: "Tensorboard version"
-#    <%- if m_error -%>
-#      <span class="text-danger">Error when parsing module versions:</span>
-#      ```
-#      <%= m_error.gsub("\n", "\n      ") %>
-#      ```
-#    <%- end -%>
-#    <%- if _list_tf_versions.blank? -%>
-#    widget: text_field
-#    <%- else -%>
-#    widget: select
-#    options:
-#      <%- _list_tf_versions.each do |q| -%>
-#      - [ "<%= q %>", "<%= q %>" ]
-#      <%- end -%>
-#    <%- end -%>
-#
-#  sh_modules:
-#    label: "Additional modules (optional)"
-#    help: |
-#        <small>Space separated list of additional modules to load (eg. `py-numpy/1.17.2_py36`)</br/>
-#        Full list at https://www.sherlock.stanford.edu/docs/software/list </small>
-#
-#  sh_partition:
-#    label: "Partition"
-#    value: "dev"
-#    required: true
-#    help: |
-#      <small>Partition to submit the job to</small>
-#    <%- if p_error -%>
-#      <span class="text-danger">Error when parsing partitions:</span>
-#      ```
-#      <%= p_error.gsub("\n", "\n      ") %>
-#      ```
-#    <%- end -%>
-#    <%- if _list_partitions.blank? -%>
-#    widget: text_field
-#    <%- else -%>
-#    widget: select
-#    options:
-#      <%- _list_partitions.each do |q| -%>
-#      - [ "<%= q %>", "<%= q %>" ]
-#      <%- end -%>
-#    <%- end -%>
-#
-#  sh_cpus:
-#    label: "#CPUs"
-#    widget: "number_field"
-#    help: "<small>Number of CPU cores to allocate</small>"
-#    required: true
-#    min: 1
-#    value: "1"
-#
-#  sh_gpus:
-#    label: "#GPUs (optional)"
-#    widget: "number_field"
-#    help: "<small>Number of GPUs to allocate (don't forget to load the `cuda` module in the `Modules` field above and to select a partition with GPUs)</small>"
-#    min: 1
-#    max: 8
-#    value: ""
-#
-#  sh_mem:
-#    label: "Memory (GB) (optional)"
-#    widget: "number_field"
-#    help: "<small>Amount of memory to allocate</small>"
-#
-#  bc_num_hours:
-#    label: "Runtime (in hours)"
+  tb_extra_args:
+    label: "Additional TensorBoard arguments (optional)"

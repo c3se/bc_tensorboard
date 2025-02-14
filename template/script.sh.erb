@@ -1,12 +1,16 @@
+<%-
+if context.tb_runtime.to_s.end_with?(".sh")
+  env_cmd = "ml purge > /dev/null 2>&1 && source #{context.tb_runtime}"
+  tb_cmd = "tensorboard"
+else 
+  env_cmd = "unset APPTAINER_BIND SINGULARITY_BIND"
+  tb_cmd = "apptainer run #{context.tb_runtime} tensorboard"
+end
+
+-%>
 #!/usr/bin/bash
 
-#
-# Load modules
-#
-
-ml purge > /dev/null 2>&1
-# Have tensorboard in PATH from user script
-source <%= context.tb_runtime %>
+<%= env_cmd %>
 
 # tensorboard creates a file under TMPDIR called .tensorboard-info/pid-$PID.info
 # There is a risk of $PID collision due to running inside a container so set TMPDIR
@@ -25,6 +29,6 @@ cd "${HOME}"
 # Launch the Tensorboard Server
 # start on 127.0.0.1, since TensorBoard doesn't support any kind of authentication
 # and we rely on authrevproxy to only allow authentified requests
-tensorboard --logdir=<%= context.tb_logdir %> <%= context.tb_extra_args %> \
-            --host=127.0.0.1 \
-            --port="${app_port}"
+<%= tb_cmd %> --logdir="<%= context.tb_logdir %>" <%= context.tb_extra_args %> \
+  --host=127.0.0.1 \
+  --port="${app_port}"
