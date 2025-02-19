@@ -40,17 +40,15 @@ attributes:
 <% sif_env.each do |pretty_path, path, version| %>
         - [ "<%= pretty_path %>", "<%= path %>" ]
 <% end %>
-# # optional: we can user the ones from module if we want
-#       LMOD modules:
-# <% lmod_env.each do |pretty_path, path| %>
-#         - [ "<%= pretty_path %>", "<%= path %>" ]
-# <% end %>
-# # optional: we can also let users select their own environment/sif
-#       User environments:
-#        - [ "~/portal/tensorboard/*.{sh,sif}",  "x", disabled: true ]
-# <% user_env.each do |pretty_path, path| %>
-#         - [ "<%= pretty_path %>", "<%= path %>" ]
-# <% end %>
+      LMOD modules:
+<% lmod_env.each do |pretty_path, path| %>
+        - [ "<%= pretty_path %>", "<%= path %>" ]
+<% end %>
+      User environments:
+       - [ "~/portal/tensorboard/*.{sh,sif}",  "x", disabled: true ]
+<% user_env.each do |pretty_path, path| %>
+        - [ "<%= pretty_path %>", "<%= path %>" ]
+<% end %>
 
   tb_extra_args:
     label: "Additional TensorBoard arguments (optional)"
